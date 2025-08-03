@@ -1,0 +1,558 @@
+# --- Fase 1: Concepção, Arquitetura de Dados e Configuração do Ambiente ---
+# Tempo Estimado: 1-3 Semanas
+
+# 1.1. Definição do Escopo e Requisitos de Dados (Não é código, mas é crucial)
+#    - Revise o roadmap.
+#    - Comece a desenhar seu Diagrama de Fluxo de Dados Conceitual (pode ser um rascunho em papel ou uma ferramenta como draw.io).
+#    - Exemplo de fluxo:
+#      Tela/Voz -> Módulos de Ingestão (OCR/Speech-to-Text) -> Pré-processamento -> LLM (Análise/Recomendação) ->
+#      API Hotmart/Redes Sociais -> Módulos ETL -> Banco de Dados Relacional -> Consultas SQL -> Automação/Relatórios.
+
+# 1.2. Escolha da Linguagem de Programação e Ferramentas Principais (Já definimos Python)
+#    - Instale Python (se ainda não tiver): python.org
+#    - Crie um ambiente virtual para o projeto:
+#      python -m venv venv_projeto
+#      No Windows: .\venv_projeto\Scripts\activate
+#      No macOS/Linux: source venv_projeto/bin/activate
+#    - Inicialize um repositório Git:
+#      git init
+#      git add .
+#      git commit -m "Initial commit: Project setup"
+#      Crie um repositório no GitHub/GitLab e conecte-o.
+
+# 1.3. Seleção e Configuração de Ferramentas e APIs (Instalação das bibliotecas Python)
+
+# Instale as bibliotecas Python necessárias (execute no seu terminal com o ambiente virtual ativado):
+# pip install pytesseract Pillow pyautogui google-generativeai psycopg2-binary SpeechRecognition pydub
+
+# Para o Tesseract OCR (motor externo ao Python):
+# - Windows: Baixe o instalador em https://tesseract-ocr.github.io/tessdoc/Downloads.html e instale.
+#   Adicione o caminho do executável do Tesseract (ex: C:\Program Files\Tesseract-OCR) à variável de ambiente PATH.
+# - macOS: brew install tesseract
+# - Linux (Ubuntu/Debian): sudo apt-get install tesseract-ocr
+
+# Para a API do Google Gemini (ou OpenAI):
+# - Obtenha sua chave de API no Google AI Studio (aistudio.google.com) ou OpenAI Platform (platform.openai.com).
+# - **NÃO COLOQUE A CHAVE DIRETAMENTE NO CÓDIGO!** Use variáveis de ambiente ou um arquivo .env.
+#   Exemplo de arquivo .env (crie um arquivo chamado `.env` na raiz do seu projeto):
+#   GEMINI_API_KEY="SUA_CHAVE_AQUI"
+#   OPENAI_API_KEY="SUA_CHAVE_AQUI"
+#   Adicione `.env` ao seu `.gitignore` para não subir a chave para o repositório!
+#   Para usar .env: pip install python-dotenv
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv() # Carrega as variáveis de ambiente do arquivo .env
+
+# Exemplo de como acessar a chave (substitua pelo seu):
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# --- Fase 2: Desenvolvimento de Pipelines de Ingestão e Modelagem de Dados ---
+# Tempo Estimado: 4-8 Semanas
+
+# 2.1. Módulo de Ingestão de Dados Não Estruturados (OCR e Voz)
+
+# Módulo de Captura de Tela e OCR
+import pyautogui
+from PIL import Image
+import pytesseract
+import io
+
+# Configura o caminho para o executável do Tesseract se não estiver no PATH do sistema
+# Em Windows, pode ser algo como: pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+# Em Linux/macOS, geralmente não é necessário se instalado via package manager.
+
+def capturar_e_ler_tela(area=None):
+    """
+    Captura uma área da tela e extrai texto usando OCR.
+    Args:
+        area (tuple, optional): Uma tupla (left, top, width, height) para a área de captura.
+                                Se None, captura a tela inteira.
+    Returns:
+        str: O texto extraído da tela.
+    """
+    try:
+        if area:
+            screenshot = pyautogui.screenshot(region=area)
+        else:
+            screenshot = pyautogui.screenshot()
+
+        # Converte a imagem PIL para bytes para o pytesseract
+        img_byte_arr = io.BytesIO()
+        screenshot.save(img_byte_arr, format='PNG')
+        img_byte_arr = img_byte_arr.getvalue()
+
+        # Extrai o texto usando Tesseract
+        # lang='por' para português, 'eng' para inglês
+        texto_extraido = pytesseract.image_to_string(Image.open(io.BytesIO(img_byte_arr)), lang='por')
+        print(f"Texto extraído via OCR:\n{texto_extraido}\n---")
+        return texto_extraido
+    except Exception as e:
+        print(f"Erro ao capturar ou ler tela: {e}")
+        return ""
+
+# Módulo de Reconhecimento de Voz (Speech-to-Text)
+# Nota: Para uso em produção, considere APIs de nuvem como Google Cloud Speech-to-Text
+# ou AWS Transcribe para maior precisão e escalabilidade.
+# SpeechRecognition é bom para testes locais e microfone.
+import speech_recognition as sr
+from pydub import AudioSegment
+from pydub.playback import play
+
+def reconhecer_voz_do_microfone():
+    """
+    Ouve o microfone e tenta reconhecer a fala.
+    Retorna o texto reconhecido.
+    """
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Diga algo...")
+        r.adjust_for_ambient_noise(source) # Ajusta para o ruído ambiente
+        audio = r.listen(source)
+    try:
+        texto = r.recognize_google(audio, language='pt-BR')
+        print(f"Você disse: {texto}")
+        return texto
+    except sr.UnknownValueError:
+        print("Não foi possível entender o áudio")
+        return ""
+    except sr.RequestError as e:
+        print(f"Erro no serviço de reconhecimento de fala; {e}")
+        return ""
+
+# 2.2. Módulo de Ingestão de Dados Estruturados (Hotmart/Redes Sociais)
+# Este módulo é mais conceitual aqui, pois requer acesso a APIs reais e credenciais.
+# Para Hotmart, você precisaria da API de Vendas ou Produtos.
+# Para Redes Sociais, APIs como Facebook Graph API, TikTok API, Instagram Graph API.
+
+def coletar_dados_hotmart_api(api_key_hotmart, produto_id=None):
+    """
+    Simula a coleta de dados de produtos da Hotmart (requer API real).
+    Args:
+        api_key_hotmart (str): Sua chave de API da Hotmart.
+        produto_id (str, optional): ID de um produto específico.
+    Returns:
+        dict: Dados simulados de produtos.
+    """
+    print(f"Simulando coleta de dados da Hotmart para produto {produto_id or 'todos'}...")
+    # Aqui você faria uma requisição HTTP real para a API da Hotmart
+    # Exemplo: requests.get(f"https://api.hotmart.com/products/{produto_id}", headers={"Authorization": f"Bearer {api_key_hotmart}"})
+    dados_simulados = {
+        "id": produto_id or "PROD123",
+        "nome": "Curso de Marketing Digital",
+        "nicho": "Educação Online",
+        "comissao_percentual": 30,
+        "preco": 297.00,
+        "url_vendas": "https://hotm.art/cursomarketing",
+        "avaliacoes": 4.8
+    }
+    return dados_simulados
+
+def coletar_metricas_redes_sociais(plataforma, termo_pesquisa):
+    """
+    Simula a coleta de métricas de redes sociais (requer APIs reais).
+    Args:
+        plataforma (str): Nome da plataforma (ex: 'tiktok', 'instagram').
+        termo_pesquisa (str): Termo para buscar tendências/engajamento.
+    Returns:
+        dict: Métricas simuladas.
+    """
+    print(f"Simulando coleta de métricas de {plataforma} para '{termo_pesquisa}'...")
+    # Aqui você faria requisições HTTP reais para as APIs das redes sociais
+    metricas_simuladas = {
+        "plataforma": plataforma,
+        "termo": termo_pesquisa,
+        "engajamento_medio": 0.05,
+        "tendencia_crescimento": "alta",
+        "num_mencoes": 15000
+    }
+    return metricas_simuladas
+
+# 2.3. Modelagem e Implementação do Banco de Dados Relacional (PostgreSQL/MySQL)
+
+# Exemplo de SQL DDL (Data Definition Language) para criar as tabelas.
+# Você deve executar esses comandos diretamente no seu cliente PostgreSQL/MySQL (ex: pgAdmin, MySQL Workbench).
+"""
+-- SQL DDL para PostgreSQL/MySQL
+
+CREATE TABLE IF NOT EXISTS produtos_afiliados (
+    id VARCHAR(255) PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    nicho VARCHAR(255),
+    comissao_percentual DECIMAL(5, 2),
+    preco DECIMAL(10, 2),
+    url_vendas TEXT,
+    avaliacoes DECIMAL(2, 1),
+    data_coleta TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS interacoes_tela (
+    id SERIAL PRIMARY KEY,
+    texto_capturado TEXT NOT NULL,
+    resposta_ia TEXT,
+    timestamp_interacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS pedidos_voz (
+    id SERIAL PRIMARY KEY,
+    comando_voz TEXT NOT NULL,
+    produto_id VARCHAR(255),
+    quantidade INT,
+    status_pedido VARCHAR(50),
+    timestamp_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (produto_id) REFERENCES produtos_afiliados(id)
+);
+
+CREATE TABLE IF NOT EXISTS metricas_sociais (
+    id SERIAL PRIMARY KEY,
+    plataforma VARCHAR(50) NOT NULL,
+    termo_pesquisa VARCHAR(255) NOT NULL,
+    engajamento_medio DECIMAL(5, 2),
+    tendencia_crescimento VARCHAR(50),
+    num_mencoes INT,
+    data_coleta TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
+# Conexão Python-BD (Exemplo com PostgreSQL usando psycopg2)
+import psycopg2
+from psycopg2 import Error
+
+def conectar_bd():
+    """Conecta ao banco de dados PostgreSQL."""
+    try:
+        conn = psycopg2.connect(
+            user="seu_usuario_bd",       # Substitua pelo seu usuário do BD
+            password="sua_senha_bd",     # Substitua pela sua senha do BD
+            host="127.0.0.1",            # Ou o IP/hostname do seu servidor BD
+            port="5432",                 # Porta padrão do PostgreSQL
+            database="seu_banco_de_dados" # Substitua pelo nome do seu BD
+        )
+        print("Conexão com o banco de dados estabelecida com sucesso!")
+        return conn
+    except Error as e:
+        print(f"Erro ao conectar ao banco de dados: {e}")
+        return None
+
+def inserir_produto_afiliado(conn, produto_data):
+    """Insere dados de um produto afiliado no BD."""
+    try:
+        cursor = conn.cursor()
+        query = """
+        INSERT INTO produtos_afiliados (id, nome, nicho, comissao_percentual, preco, url_vendas, avaliacoes)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (id) DO UPDATE SET
+            nome = EXCLUDED.nome,
+            nicho = EXCLUDED.nicho,
+            comissao_percentual = EXCLUDED.comissao_percentual,
+            preco = EXCLUDED.preco,
+            url_vendas = EXCLUDED.url_vendas,
+            avaliacoes = EXCLUDED.avaliacoes,
+            data_coleta = CURRENT_TIMESTAMP;
+        """
+        cursor.execute(query, (
+            produto_data['id'], produto_data['nome'], produto_data['nicho'],
+            produto_data['comissao_percentual'], produto_data['preco'],
+            produto_data['url_vendas'], produto_data['avaliacoes']
+        ))
+        conn.commit()
+        print(f"Produto '{produto_data['nome']}' inserido/atualizado no BD.")
+    except Error as e:
+        print(f"Erro ao inserir produto: {e}")
+
+def inserir_interacao_tela(conn, texto_capturado, resposta_ia):
+    """Insere uma interação de tela no BD."""
+    try:
+        cursor = conn.cursor()
+        query = """
+        INSERT INTO interacoes_tela (texto_capturado, resposta_ia)
+        VALUES (%s, %s);
+        """
+        cursor.execute(query, (texto_capturado, resposta_ia))
+        conn.commit()
+        print("Interação de tela registrada no BD.")
+    except Error as e:
+        print(f"Erro ao inserir interação de tela: {e}")
+
+def inserir_pedido_voz(conn, comando_voz, produto_id, quantidade, status_pedido="Pendente"):
+    """Insere um pedido de voz no BD."""
+    try:
+        cursor = conn.cursor()
+        query = """
+        INSERT INTO pedidos_voz (comando_voz, produto_id, quantidade, status_pedido)
+        VALUES (%s, %s, %s, %s);
+        """
+        cursor.execute(query, (comando_voz, produto_id, quantidade, status_pedido))
+        conn.commit()
+        print(f"Pedido de voz '{comando_voz}' registrado no BD.")
+    except Error as e:
+        print(f"Erro ao inserir pedido de voz: {e}")
+
+def inserir_metrica_social(conn, metrica_data):
+    """Insere métricas sociais no BD."""
+    try:
+        cursor = conn.cursor()
+        query = """
+        INSERT INTO metricas_sociais (plataforma, termo_pesquisa, engajamento_medio, tendencia_crescimento, num_mencoes)
+        VALUES (%s, %s, %s, %s, %s);
+        """
+        cursor.execute(query, (
+            metrica_data['plataforma'], metrica_data['termo'], metrica_data['engajamento_medio'],
+            metrica_data['tendencia_crescimento'], metrica_data['num_mencoes']
+        ))
+        conn.commit()
+        print(f"Métrica social para '{metrica_data['termo']}' inserida no BD.")
+    except Error as e:
+        print(f"Erro ao inserir métrica social: {e}")
+
+
+# 2.4. Desenvolvimento de Processos ETL (Extract, Transform, Load)
+# Este é um exemplo simplificado de um pipeline de ingestão.
+# Em um cenário real, você usaria ferramentas de orquestração como Apache Airflow.
+
+def pipeline_ingestao_hotmart(conn, api_key_hotmart):
+    """Pipeline ETL para ingestão de dados da Hotmart."""
+    print("\n--- Iniciando Pipeline de Ingestão Hotmart ---")
+    try:
+        # Extract
+        dados_brutos = coletar_dados_hotmart_api(api_key_hotmart)
+
+        # Transform (poderia ter mais transformações aqui, como validação, limpeza)
+        dados_transformados = dados_brutos # Por enquanto, sem transformação complexa
+
+        # Load
+        if dados_transformados:
+            inserir_produto_afiliado(conn, dados_transformados)
+        print("--- Pipeline de Ingestão Hotmart Concluído ---")
+    except Exception as e:
+        print(f"Erro no pipeline de ingestão Hotmart: {e}")
+
+# --- Fase 3: Processamento de Conhecimento, Automação e Análise Básica ---
+# Tempo Estimado: 9-12 Semanas
+
+# 3.1. Módulo de Processamento de Linguagem Natural (NLP) e IA
+import google.generativeai as genai
+
+# Configura a API do Gemini
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel('gemini-pro') # Ou 'gemini-1.5-flash' para modelos mais recentes
+
+def processar_texto_com_ia(texto_entrada, prompt_extra=""):
+    """
+    Envia texto para a IA e retorna a resposta.
+    Args:
+        texto_entrada (str): O texto a ser processado pela IA.
+        prompt_extra (str): Instruções adicionais para a IA.
+    Returns:
+        str: A resposta gerada pela IA.
+    """
+    try:
+        full_prompt = f"{prompt_extra}\n\nTexto para analisar: {texto_entrada}"
+        response = model.generate_content(full_prompt)
+        resposta_ia = response.text
+        print(f"Resposta da IA:\n{resposta_ia}\n---")
+        return resposta_ia
+    except Exception as e:
+        print(f"Erro ao processar texto com IA: {e}")
+        return "Desculpe, não consegui processar sua solicitação no momento."
+
+def recomendar_produto_com_ia(conn, termo_pesquisa):
+    """
+    Usa IA para recomendar produtos com base em um termo de pesquisa e dados do BD.
+    """
+    try:
+        cursor = conn.cursor()
+        # Exemplo de consulta para buscar produtos relevantes
+        query = f"SELECT nome, nicho, comissao_percentual, preco, url_vendas FROM produtos_afiliados WHERE nome ILIKE '%{termo_pesquisa}%' OR nicho ILIKE '%{termo_pesquisa}%' LIMIT 5;"
+        cursor.execute(query)
+        produtos = cursor.fetchall()
+
+        if not produtos:
+            return "Não encontrei produtos relevantes no momento."
+
+        produtos_str = "\n".join([f"- {p[0]} ({p[1]}) - Comissão: {p[2]}% - Preço: R${p[3]} - Link: {p[4]}" for p in produtos])
+        prompt_recomendacao = f"""
+        Com base nos seguintes produtos afiliados e no termo de pesquisa '{termo_pesquisa}',
+        recomende o melhor produto para vendas, considerando potencial de lucro e relevância para o termo.
+        Seja conciso e persuasivo.
+
+        Produtos disponíveis:
+        {produtos_str}
+        """
+        resposta_ia = processar_texto_com_ia("", prompt_recomendacao)
+        return resposta_ia
+    except Exception as e:
+        print(f"Erro ao recomendar produto com IA: {e}")
+        return "Não foi possível gerar uma recomendação de produto."
+
+# 3.2. Módulo de Automação de Interações
+
+def digitar_na_tela(texto):
+    """
+    Digita o texto fornecido na tela usando pyautogui.
+    Args:
+        texto (str): O texto a ser digitado.
+    """
+    try:
+        print(f"Digitando na tela: '{texto}'")
+        pyautogui.typewrite(texto, interval=0.05) # Intervalo para simular digitação humana
+    except Exception as e:
+        print(f"Erro ao digitar na tela: {e}")
+
+# 3.3. Desenvolvimento de Consultas SQL para Análise
+
+def obter_top_produtos_por_comissao(conn, limit=5):
+    """Retorna os top N produtos com maior comissão."""
+    try:
+        cursor = conn.cursor()
+        query = f"SELECT nome, comissao_percentual, preco FROM produtos_afiliados ORDER BY comissao_percentual DESC LIMIT {limit};"
+        cursor.execute(query)
+        return cursor.fetchall()
+    except Error as e:
+        print(f"Erro ao obter top produtos por comissão: {e}")
+        return []
+
+def contar_pedidos_por_produto(conn):
+    """Conta o número de pedidos por produto."""
+    try:
+        cursor = conn.cursor()
+        query = """
+        SELECT pa.nome, COUNT(pv.id) AS total_pedidos
+        FROM produtos_afiliados pa
+        LEFT JOIN pedidos_voz pv ON pa.id = pv.produto_id
+        GROUP BY pa.nome
+        ORDER BY total_pedidos DESC;
+        """
+        cursor.execute(query)
+        return cursor.fetchall()
+    except Error as e:
+        print(f"Erro ao contar pedidos por produto: {e}")
+        return []
+
+# 3.4. Orquestração e Agendamento de Pipelines (Conceitos de Nuvem - Não há código direto aqui, é conceitual)
+# - Pense em como você agendaria a coleta de métricas sociais ou produtos da Hotmart diariamente.
+# - Pesquise sobre AWS Lambda + EventBridge (para agendamento) ou GCP Cloud Functions + Cloud Scheduler.
+# - Para pipelines mais complexos, explore Apache Airflow ou AWS Glue/GCP Dataflow.
+
+# --- Fase 4: Otimização, Escalabilidade e Boas Práticas de Engenharia ---
+# Tempo Estimado: 13+ Semanas
+
+# 4.1. Otimização de Banco de Dados e Consultas (Exemplo no SQL DDL)
+# - No DDL acima, já incluímos PRIMARY KEY, que cria um índice automaticamente.
+# - Considere adicionar índices em colunas frequentemente usadas em WHERE ou JOIN, como 'nicho' ou 'termo_pesquisa'.
+# - Exemplo de SQL para criar um índice:
+#   CREATE INDEX idx_produtos_nicho ON produtos_afiliados (nicho);
+
+# 4.2. Implementação de Boas Práticas de Engenharia de Software
+# - Documentação (docstrings): Adicione docstrings a todas as suas funções e classes.
+# - Testes Automatizados: Crie um arquivo `test_app.py` e use `unittest` ou `pytest`.
+#   Exemplo de teste simples:
+#   def test_captura_e_leitura_nao_vazia():
+#       texto = capturar_e_ler_tela((0, 0, 100, 100)) # Captura uma pequena área
+#       assert len(texto) > 0, "O texto capturado não deveria ser vazio"
+# - Código Limpo: Siga as diretrizes PEP 8 do Python. Use nomes de variáveis claros.
+# - Gerenciamento de Dependências: Mantenha seu `requirements.txt` atualizado:
+#   pip freeze > requirements.txt
+
+# 4.3. Noções de Processamento Distribuído (Hadoop/Spark - Não há código direto aqui)
+# - Para dados muito grandes (petabytes), você precisaria de frameworks como Spark.
+# - Exemplo de uso: Processar milhões de posts de redes sociais para identificar tendências em tempo real.
+
+# 4.4. Definição e Monitoramento de Métricas (KPIs/OKRs)
+# - Defina as métricas que importam para o negócio de afiliado (ex: Taxa de Conversão, ROI, Custo por Clique, Vendas por Produto).
+# - Use as consultas SQL (item 3.3) para extrair esses dados e apresentá-los.
+# - Ferramentas de visualização (ex: Streamlit, Dash, ou até mesmo Excel/Google Sheets com dados exportados).
+
+# 4.5. Segurança e Credenciais (Já abordado no item 1.3 com .env)
+
+# --- Exemplo de Fluxo Principal da Aplicação (main.py) ---
+# Este é o ponto de entrada da sua aplicação.
+
+def main():
+    conn = None
+    try:
+        conn = conectar_bd()
+        if conn:
+            # Exemplo de uso: Pipeline de Ingestão Hotmart (executar uma vez ou agendar)
+            # api_key_hotmart = "SUA_CHAVE_HOTMART_AQUI" # Obtenha da Hotmart
+            # pipeline_ingestao_hotmart(conn, api_key_hotmart)
+
+            while True:
+                print("\n--- Menu Principal ---")
+                print("1. Ler tela e responder com IA")
+                print("2. Receber comando de voz e processar")
+                print("3. Recomendar produto (via IA e BD)")
+                print("4. Ver Top Produtos por Comissão (BD)")
+                print("5. Contar Pedidos por Produto (BD)")
+                print("0. Sair")
+
+                escolha = input("Escolha uma opção: ")
+
+                if escolha == '1':
+                    # Pode pedir ao usuário para selecionar uma área ou capturar tudo
+                    # area_captura = (x, y, largura, altura) # Defina a área se quiser
+                    texto_lido = capturar_e_ler_tela()
+                    if texto_lido:
+                        prompt_ia = input("Qual instrução você quer dar à IA sobre o texto? (Ex: 'Resuma', 'Responda como um especialista em vendas', 'Traduza para inglês'): ")
+                        resposta = processar_texto_com_ia(texto_lido, prompt_ia)
+                        if input("Deseja digitar a resposta na tela? (s/n): ").lower() == 's':
+                            digitar_na_tela(resposta)
+                        inserir_interacao_tela(conn, texto_lido, resposta)
+                    else:
+                        print("Nenhum texto foi lido da tela.")
+
+                elif escolha == '2':
+                    comando = reconhecer_voz_do_microfone()
+                    if comando:
+                        print(f"Comando de voz recebido: '{comando}'")
+                        # Exemplo de processamento de comando de voz com IA
+                        prompt_ia_voz = f"Analise o comando de voz: '{comando}'. Se for um pedido de produto, extraia o nome do produto e a quantidade. Se for uma pesquisa, identifique o termo. Responda de forma concisa."
+                        analise_comando = processar_texto_com_ia(comando, prompt_ia_voz)
+                        print(f"Análise da IA para o comando de voz:\n{analise_comando}")
+
+                        # Lógica para extrair produto_id e quantidade da análise da IA
+                        # Isso exigiria um parsing mais robusto da resposta da IA
+                        # Por simplicidade, vamos simular:
+                        produto_id_simulado = "PROD123" # Substitua por lógica de extração real
+                        quantidade_simulada = 1 # Substitua por lógica de extração real
+                        inserir_pedido_voz(conn, comando, produto_id_simulado, quantidade_simulada, "Processando")
+
+                elif escolha == '3':
+                    termo = input("Digite um termo para buscar produtos e receber recomendações: ")
+                    recomendacao = recomendar_produto_com_ia(conn, termo)
+                    print(f"\nRecomendação de Produto:\n{recomendacao}")
+                    if input("Deseja digitar a recomendação na tela? (s/n): ").lower() == 's':
+                        digitar_na_tela(recomendacao)
+
+                elif escolha == '4':
+                    top_produtos = obter_top_produtos_por_comissao(conn)
+                    print("\n--- Top Produtos por Comissão ---")
+                    for produto in top_produtos:
+                        print(f"Nome: {produto[0]}, Comissão: {produto[1]}%, Preço: R${produto[2]}")
+                    print("---")
+
+                elif escolha == '5':
+                    pedidos_por_produto = contar_pedidos_por_produto(conn)
+                    print("\n--- Pedidos por Produto ---")
+                    for item in pedidos_por_produto:
+                        print(f"Produto: {item[0]}, Total de Pedidos: {item[1]}")
+                    print("---")
+
+                elif escolha == '0':
+                    print("Saindo da aplicação. Até mais!")
+                    break
+                else:
+                    print("Opção inválida. Tente novamente.")
+
+    except Exception as e:
+        print(f"Ocorreu um erro inesperado na aplicação principal: {e}")
+    finally:
+        if conn:
+            conn.close()
+            print("Conexão com o banco de dados fechada.")
+
+if __name__ == "__main__":
+    main()
+
