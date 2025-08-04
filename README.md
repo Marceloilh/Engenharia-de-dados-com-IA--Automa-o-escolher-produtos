@@ -1,92 +1,68 @@
-🚀 Plataforma de Automação e Análise de Vendas para Afiliados com IA e Voz 🚀
 
-Descrição do Projeto
-Este projeto é uma plataforma inovadora desenvolvida em Python, focada em otimizar e automatizar processos de vendas para afiliados, 
-utilizando Inteligência Artificial e processamento de voz. O objetivo principal é transformar dados brutos (da tela, voz e APIs) em informações acionáveis e conhecimento, 
-aprimorando a tomada de decisão e a eficiência operacional no nicho de marketing de afiliados.
 
-O projeto foi concebido para demonstrar proficiência em diversas áreas da Engenharia de Dados, incluindo:
+# 🚀 Plataforma de Automação e Análise de Vendas para Afiliados com IA e Voz 🚀
 
-Desenvolvimento e manutenção de pipelines de dados.
+## ✨ Descrição do Projeto
 
-Modelagem de Banco de Dados (relacional) para fins analíticos.
+Este projeto é uma plataforma inovadora desenvolvida em Python, focada em otimizar e automatizar processos de vendas para afiliados. A solução integra **Inteligência Artificial** (IA) e **processamento de voz** para transformar dados brutos de diversas fontes (tela, voz e APIs) em informações acionáveis e conhecimento valioso.
 
-Execução de processos ETL.
+O principal objetivo é aprimorar a tomada de decisão e a eficiência operacional no nicho de marketing de afiliados, demonstrando proficiência em áreas-chave da **Engenharia de Dados**:
 
-Desenvolvimento de consultas SQL otimizadas.
+  * ✅ Desenvolvimento e manutenção de pipelines de dados.
+  * ✅ Modelagem de Banco de Dados (relacional) para fins analíticos.
+  * ✅ Execução de processos ETL (Extract, Transform, Load).
+  * ✅ Desenvolvimento de consultas SQL otimizadas.
+  * ✅ Conhecimento aprofundado em programação Python.
+  * ✅ Adesão a boas práticas de engenharia de software.
 
-Conhecimento em programação (Python).
+## ⚙️ Arquitetura do Projeto
 
-Adesão a boas práticas de engenharia de software.
+A arquitetura do projeto segue um fluxo de dados bem definido, abrangendo desde a ingestão de dados brutos até a geração de insights e automação. O diagrama abaixo ilustra o fluxo de dados e os componentes-chave:
 
-Funcionalidades Principais
-Leitura e Resposta Inteligente:
+### Componentes Chave:
 
-Captura de texto da tela via OCR (Optical Character Recognition).
+  * **Fontes de Dados:** Captura de texto da **tela** (via OCR), comandos de **voz** (via Speech-to-Text), e dados de **APIs** de plataformas de afiliados (Hotmart) e redes sociais.
+  * **Módulos de Ingestão e Pré-processamento:** Responsáveis por coletar e preparar os dados brutos para o processamento.
+  * **LLM (Large Language Model):** A inteligência central para análise, recomendação de produtos e geração de respostas coerentes.
+  * **Módulos ETL:** Processam e transformam os dados para que possam ser carregados e armazenados no banco de dados relacional.
+  * **Banco de Dados Relacional:** O repositório centralizado onde os dados estruturados são armazenados.
+  * **Consultas SQL:** Ferramenta para extrair informações detalhadas para análise e relatórios.
+  * **Automação/Relatórios:** Geração de ações automatizadas e apresentação de insights valiosos.
 
-Processamento do texto capturado por um Large Language Model (LLM) para gerar respostas coerentes.
+## 🛠️ Funcionalidades Principais
 
-Automação da digitação de respostas na tela.
+### 🗣️ Leitura e Resposta Inteligente:
 
-Comandos de Voz e Automação:
+  * **Captura de Texto:** Utiliza OCR (Optical Character Recognition) para ler texto diretamente da tela.
+  * **Processamento com IA:** Um LLM (Large Language Model) analisa o texto capturado para gerar respostas relevantes e contextuais.
+  * **Automação de Respostas:** A plataforma automatiza a digitação das respostas na tela, agilizando a interação.
 
-Reconhecimento de fala (Speech-to-Text) para interpretar comandos de voz.
+### 🎙️ Comandos de Voz e Automação:
 
-Processamento por IA para extrair intenções e dados de pedidos.
+  * **Reconhecimento de Fala:** Converte comandos de voz em texto (Speech-to-Text).
+  * **Processamento por IA:** A inteligência artificial interpreta a intenção e os dados contidos nos comandos de voz para, por exemplo, registrar pedidos.
+  * **Automação de Ações:** Executa ações e registra dados no banco de dados com base nos comandos de voz.
 
-Automação de ações e registros no banco de dados com base em comandos de voz.
+### 🛒 Gestão de Produtos Afiliados:
 
-Gestão de Produtos Afiliados:
+  * **Ingestão de Dados:** Simula a ingestão de dados de produtos de plataformas como a Hotmart via API.
+  * **Recomendação com IA:** Sugere produtos para vendas utilizando IA, com base em dados de mercado e histórico.
 
-Simulação de ingestão de dados de produtos de plataformas como Hotmart via API.
+### 📊 Análise de Vendas e Métricas:
 
-Recomendação de produtos para vendas utilizando IA, baseada em dados de mercado e do banco de dados.
+  * **Armazenamento de Dados:** Armazena dados de produtos, interações e pedidos em um banco de dados relacional (PostgreSQL/MySQL).
+  * **Análise com SQL:** Permite a execução de consultas SQL para análise de desempenho de produtos e tendências de pedidos.
+  * **Análise de Engajamento:** Simula a coleta de métricas de redes sociais para análise de engajamento e tendências do mercado.
 
-Análise de Vendas e Métricas:
+## 🚀 Tecnologias Utilizadas
 
-Armazenamento de dados de produtos, interações e pedidos em um banco de dados relacional (PostgreSQL/MySQL).
-
-Consultas SQL para análise de desempenho de produtos e tendências de pedidos.
-
-Simulação de coleta de métricas de redes sociais para análise de engajamento e tendências.
-
-Arquitetura do Projeto
-
-A arquitetura do projeto segue um fluxo de dados bem definido, abrangendo desde a ingestão de dados brutos até a geração de insights e automação.
-
-Componentes Chave:
-
-Fontes de Dados: Tela (via OCR), Microfone (via Speech-to-Text), APIs de Plataformas de Afiliados (Hotmart) e Redes Sociais.
-
-Módulos de Ingestão e Pré-processamento: Responsáveis por coletar e preparar os dados.
-
-LLM (Large Language Model): Utilizado para análise, recomendação e geração de respostas.
-
-Módulos ETL: Processam os dados para carregamento no banco de dados relacional.
-
-Banco de Dados Relacional: Armazenamento centralizado de dados estruturados.
-
-Consultas SQL: Extração de informações para análise e relatórios.
-
-Automação/Relatórios: Geração de ações automatizadas e apresentação de insights.
-
-Tecnologias Utilizadas
-Linguagem de Programação: Python
-
-OCR: Tesseract OCR (pytesseract)
-
-Automação de Interface: PyAutoGUI
-
-Processamento de Imagens: Pillow
-
-Integração com IA: Google Gemini API (google-generativeai)
-
-Reconhecimento de Voz: SpeechRecognition, pydub
-
-Banco de Dados Relacional: PostgreSQL (com psycopg2-binary) ou MySQL
-
-Gerenciamento de Ambiente: venv
-
-Variáveis de Ambiente: python-dotenv
-
-Controle de Versão: Git
+  * **Linguagem de Programação:** Python
+  * **OCR:** Tesseract OCR (via `pytesseract`)
+  * **Automação de Interface:** `PyAutoGUI`
+  * **Processamento de Imagens:** `Pillow`
+  * **Integração com IA:** Google Gemini API (`google-generativeai`)
+  * **Reconhecimento de Voz:** `SpeechRecognition`, `pydub`
+  * **Banco de Dados Relacional:** PostgreSQL (`psycopg2-binary`) ou MySQL
+  * **Gerenciamento de Ambiente:** `venv`
+  * **Variáveis de Ambiente:** `python-dotenv`
+  * **Controle de Versão:** Git
