@@ -66,3 +66,5 @@ A arquitetura do projeto segue um fluxo de dados bem definido, abrangendo desde 
   * **Gerenciamento de Ambiente:** `venv`
   * **Variáveis de Ambiente:** `python-dotenv`
   * **Controle de Versão:** Git
+
+   ![]( Diagrama-fluxo-dados.drawio.png)
