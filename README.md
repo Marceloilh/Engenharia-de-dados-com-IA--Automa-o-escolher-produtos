@@ -67,4 +67,10 @@ A arquitetura do projeto segue um fluxo de dados bem definido, abrangendo desde 
   * **Variáveis de Ambiente:** `python-dotenv`
   * **Controle de Versão:** Git
 
+  ## ⚙️ Arquitetura do Projeto
+
+A arquitetura do projeto segue um fluxo de dados bem definido, abrangendo desde a ingestão de dados brutos até a geração de insights e automação.
+O diagrama abaixo ilustra o fluxo de dados e os componentes-chave:
+
+
    ![]( Diagrama-fluxo-dados.drawio.png)
